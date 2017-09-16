@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.List;
 
 public class PSPServerImpl implements PSPServer {
     private static final Logger LOGGER = LoggerFactory.getLogger(PSPServer.class);
@@ -67,7 +68,9 @@ public class PSPServerImpl implements PSPServer {
     // 开始扫描
     private static void scannerClass(Scanner<Register> scanner) {
         try {
-            new PHPServierRegister(scanner.registerList());
+            List<Register> registers = scanner.registerList();
+            if (registers == null) return;
+            new PHPServierRegister(registers);
         } catch (IOException e) {
             e.printStackTrace();
         }

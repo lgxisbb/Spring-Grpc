@@ -15,8 +15,10 @@ public class StringUtil {
         if (-1 == pos) {
             return fileUrl;
         }
+        // 判断文件系统
+        if (System.getProperty("file.separator").equals("\\")) return fileUrl.substring(6, fileUrl.length());
+        return fileUrl.substring(5, fileUrl.length());
 
-        return fileUrl.substring(5, pos);
     }
 
     /**
