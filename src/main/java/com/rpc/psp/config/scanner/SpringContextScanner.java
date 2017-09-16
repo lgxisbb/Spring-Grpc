@@ -45,18 +45,25 @@ public class SpringContextScanner implements Scanner<Register>, ApplicationConte
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Scanner directory {}", filePath);
         }
-        return readFromDirectory(filePath);
+        return readFromDirectory(filePath, basePackage);
     }
 
-    private List<Class<Register>> readFromDirectory(String path) {
+    private List<Class<Register>> readFromDirectory(String path, String packageName) {
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.info("Scanner path : {} , packageName : {}", path, packageName);
+        }
         List<Class<Register>> returnList = new ArrayList<>();
         File[] files = new File(path).listFiles();
         for (File file : files) {
-            if (file.isDirectory())
+            if (file.isDirectory()) {
+                List<Class<Register>> classes = readFromDirectory(file.getAbsolutePath(), packageName + '.' + file.getName());
+                if (classes != null && classes.size() > 0)
+                    returnList.addAll(classes);
                 continue;
+            }
             try {
                 String name = file.getName();
-                Class baseClass = Class.forName(basePackage + '.' + name.substring(0, name.length() - 6));
+                Class baseClass = Class.forName(packageName + '.' + name.substring(0, name.length() - 6));
                 if (Register.class.isAssignableFrom(baseClass)) {
                     returnList.add(baseClass);
                     if (LOGGER.isDebugEnabled()) {

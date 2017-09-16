@@ -52,8 +52,11 @@ public class ClasspathScanner implements Scanner<Register> {
         List<Register> returnList = new ArrayList<>();
         File[] files = new File(path).listFiles();
         for (File file : files) {
-            if (file.isDirectory())
-                continue;
+            if (file.isDirectory()) {
+                List<Register> registers = readFromDirectory(file.getAbsolutePath());
+                if (registers != null && registers.size() > 0)
+                    returnList.addAll(registers);
+            }
             try {
                 String name = file.getName();
                 Class baseClass = Class.forName(basePackage + '.' + name.substring(0, name.length() - 6));
