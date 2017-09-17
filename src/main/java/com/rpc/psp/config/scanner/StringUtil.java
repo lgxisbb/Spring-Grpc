@@ -23,9 +23,6 @@ public class StringUtil {
 
     /**
      * "cn.fh.lightning" -> "cn/fh/lightning"
-     *
-     * @param name
-     * @return
      */
     public static String dotToSplash(String name) {
         return name.replaceAll("\\.", "/");
@@ -45,9 +42,6 @@ public class StringUtil {
 
     /**
      * /application/home -> /home
-     *
-     * @param uri
-     * @return
      */
     public static String trimURI(String uri) {
         String trimmed = uri.substring(1);

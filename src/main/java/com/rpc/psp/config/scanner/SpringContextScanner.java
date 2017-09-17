@@ -40,12 +40,11 @@ public class SpringContextScanner implements Scanner<BindableService>, Applicati
             LOGGER.error("context is error");
             throw new RuntimeException("spring init error ");
         }
+
         String splashPath = StringUtil.dotToSplash(basePackage);
         ClassLoader cl = ClassLoader.getSystemClassLoader();
         String filePath = cl.getResource(splashPath).getFile();
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Scanner directory {}", filePath);
-        }
+        if (LOGGER.isDebugEnabled()) LOGGER.debug("Scanner directory {}", filePath);
         List<Class<BindableService>> load = load(basePackage, new File(filePath), BindableService.class);
         if (load == null && 0 > load.size())
             return null;

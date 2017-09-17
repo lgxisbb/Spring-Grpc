@@ -1,13 +1,10 @@
 package com.rpc.psp.config.scanner;
 
 
-import io.grpc.BindableService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,15 +37,5 @@ public class CollectClass {
             }
         }
         return returnList.size() == 0 ? null : returnList;
-    }
-
-    public static void main(String[] args) {
-        ClassLoader cl = ClassLoader.getSystemClassLoader();
-        String basepackage = "com.rpc.psp.config";
-        File file = new File(cl.getResource(StringUtil.dotToSplash(basepackage)).getFile());
-        List<Class<Scanner>> load = load(basepackage, file, Scanner.class);
-        load.forEach((aClass -> {
-            System.out.println(aClass.getName());
-        }));
     }
 }

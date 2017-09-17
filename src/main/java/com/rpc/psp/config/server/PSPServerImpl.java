@@ -1,9 +1,6 @@
 package com.rpc.psp.config.server;
 
 import com.rpc.psp.config.ServerConfig;
-import com.rpc.psp.config.container.ServiceContainer;
-import com.rpc.psp.config.container.ServiceContainerImpl;
-import com.rpc.psp.config.register.PHPServierRegister;
 import com.rpc.psp.config.scanner.Scanner;
 import com.rpc.psp.config.scanner.SpringContextScanner;
 import io.grpc.BindableService;
@@ -13,14 +10,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.List;
 
 public class PSPServerImpl implements PSPServer {
     private static final Logger LOGGER = LoggerFactory.getLogger(PSPServer.class);
     // 默认配置
     public static final ServerConfig DEFAULT_CONFIG = new ServerConfig("com.walhao.psp.service", 9300);
-    // Service 容器
-    private static final ServiceContainer<io.grpc.BindableService> CONTAINER = ServiceContainerImpl.serviceContainer;
     // 扫描器
     private Scanner<BindableService> serviceScanner;
     // Server 服务器
@@ -30,9 +24,6 @@ public class PSPServerImpl implements PSPServer {
 
     public PSPServerImpl() {
         this(DEFAULT_CONFIG, new SpringContextScanner(DEFAULT_CONFIG.getBasepackage()));
-    }
-
-    public PSPServerImpl(ServerConfig config) {
     }
 
     public PSPServerImpl(Scanner<BindableService> scanner) {
@@ -47,30 +38,21 @@ public class PSPServerImpl implements PSPServer {
         server = builderServer(port);
     }
 
-    public PSPServerImpl(ServerConfig config, Scanner<BindableService> registerScanner) {
-        this.port = config.getPort();
-        // 扫描器
-        scannerClass(registerScanner);
-        // Server 服务器
-        server = builderServer(config.getPort());
+    public PSPServerImpl(ServerConfig config, Scanner<BindableService> scanner) {
+        this(config.getPort(), scanner);
     }
 
     // 初始化Server
-
-    private static Server builderServer(int port) {
+    private Server builderServer(int port) {
         ServerBuilder<?> builder = ServerBuilder.forPort(port);
-        return builder.build();
-    }
-
-    // 开始扫描
-    private static void scannerClass(Scanner<BindableService> scanner) {
         try {
-            List<BindableService> registers = scanner.registerList();
-            if (registers == null) return;
-            new PHPServierRegister(registers);
+            serviceScanner.registerList().forEach((bindService) -> {
+                builder.addService(bindService);
+            });
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
+        return builder.build();
     }
 
     //
