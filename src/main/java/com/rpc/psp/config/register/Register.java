@@ -8,6 +8,6 @@ import io.grpc.BindableService;
  */
 public interface Register {
 
-    void register(ServiceContainer<BindableService> container);
+    void register(ServiceContainer<io.grpc.BindableService> container);
 
 }

@@ -1,12 +1,11 @@
 package com.rpc.psp.config.server;
 
+import com.rpc.psp.config.ServerConfig;
 import com.rpc.psp.config.container.ServiceContainer;
 import com.rpc.psp.config.container.ServiceContainerImpl;
 import com.rpc.psp.config.register.PHPServierRegister;
 import com.rpc.psp.config.scanner.Scanner;
 import com.rpc.psp.config.scanner.SpringContextScanner;
-import com.rpc.psp.config.ServerConfig;
-import com.rpc.psp.config.register.Register;
 import io.grpc.BindableService;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
@@ -21,7 +20,9 @@ public class PSPServerImpl implements PSPServer {
     // 默认配置
     public static final ServerConfig DEFAULT_CONFIG = new ServerConfig("com.walhao.psp.service", 9300);
     // Service 容器
-    private static final ServiceContainer<BindableService> CONTAINER = ServiceContainerImpl.serviceContainer;
+    private static final ServiceContainer<io.grpc.BindableService> CONTAINER = ServiceContainerImpl.serviceContainer;
+    // 扫描器
+    private Scanner<BindableService> serviceScanner;
     // Server 服务器
     private final Server server;
     // 端口
@@ -32,22 +33,21 @@ public class PSPServerImpl implements PSPServer {
     }
 
     public PSPServerImpl(ServerConfig config) {
-        this(config, new SpringContextScanner(DEFAULT_CONFIG.getBasepackage()));
     }
 
-    public PSPServerImpl(Scanner<Register> scanner) {
+    public PSPServerImpl(Scanner<BindableService> scanner) {
         this(DEFAULT_CONFIG, scanner);
     }
 
-    public PSPServerImpl(int port, Scanner<Register> scanner) {
+    public PSPServerImpl(int port, Scanner<BindableService> scanner) {
         this.port = port;
         // 扫描器
-        scannerClass(scanner);
+        this.serviceScanner = scanner;
         // Server 服务器
         server = builderServer(port);
     }
 
-    public PSPServerImpl(ServerConfig config, Scanner<Register> registerScanner) {
+    public PSPServerImpl(ServerConfig config, Scanner<BindableService> registerScanner) {
         this.port = config.getPort();
         // 扫描器
         scannerClass(registerScanner);
@@ -59,16 +59,13 @@ public class PSPServerImpl implements PSPServer {
 
     private static Server builderServer(int port) {
         ServerBuilder<?> builder = ServerBuilder.forPort(port);
-        CONTAINER.forEach((service) -> {
-            builder.addService(service);
-        });
         return builder.build();
     }
 
     // 开始扫描
-    private static void scannerClass(Scanner<Register> scanner) {
+    private static void scannerClass(Scanner<BindableService> scanner) {
         try {
-            List<Register> registers = scanner.registerList();
+            List<BindableService> registers = scanner.registerList();
             if (registers == null) return;
             new PHPServierRegister(registers);
         } catch (IOException e) {

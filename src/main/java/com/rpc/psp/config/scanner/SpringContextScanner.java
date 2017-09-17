@@ -1,6 +1,6 @@
 package com.rpc.psp.config.scanner;
 
-import com.rpc.psp.config.register.Register;
+import io.grpc.BindableService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -9,72 +9,24 @@ import org.springframework.context.ApplicationContextAware;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.rpc.psp.config.scanner.CollectClass.load;
+
 /**
  * Create by guangxiaoLong on 2017-09-15
- * Spring 集成扫描
+ * Spring 集成类
  */
-public class SpringContextScanner implements Scanner<Register>, ApplicationContextAware {
+public class SpringContextScanner implements Scanner<BindableService>, ApplicationContextAware {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SpringContextScanner.class);
-
     private static ApplicationContext context;
 
-    private String basePackage;
-    private ClassLoader classLoader;
-
+    private final String basePackage;
 
     public SpringContextScanner(String basePackage) {
         this.basePackage = basePackage;
-        this.classLoader = getClass().getClassLoader();
-    }
-
-    public SpringContextScanner(String basePackage, ClassLoader classLoader) {
-        this.basePackage = basePackage;
-        this.classLoader = classLoader;
-    }
-
-    private List<Class<Register>> doScan(String basePackage) throws IOException {
-        String splashPath = StringUtil.dotToSplash(basePackage);
-        URL url = classLoader.getResource(splashPath);
-        String filePath = StringUtil.getRootPath(url);
-        // directory
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Scanner directory {}", filePath);
-        }
-        return readFromDirectory(filePath, basePackage);
-    }
-
-    private List<Class<Register>> readFromDirectory(String path, String packageName) {
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.info("Scanner path : {} , packageName : {}", path, packageName);
-        }
-        List<Class<Register>> returnList = new ArrayList<>();
-        File[] files = new File(path).listFiles();
-        for (File file : files) {
-            if (file.isDirectory()) {
-                List<Class<Register>> classes = readFromDirectory(file.getAbsolutePath(), packageName + '.' + file.getName());
-                if (classes != null && classes.size() > 0)
-                    returnList.addAll(classes);
-                continue;
-            }
-            try {
-                String name = file.getName();
-                Class baseClass = Class.forName(packageName + '.' + name.substring(0, name.length() - 6));
-                if (Register.class.isAssignableFrom(baseClass)) {
-                    returnList.add(baseClass);
-                    if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug("{} is scanned", baseClass);
-                    }
-                }
-            } catch (ClassNotFoundException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        return returnList.size() == 0 ? null : returnList;
     }
 
     @Override
@@ -83,21 +35,29 @@ public class SpringContextScanner implements Scanner<Register>, ApplicationConte
     }
 
     @Override
-    public List<Register> registerList() throws IOException {
-        List<Class<Register>> classes = doScan(basePackage);
-        if (classes == null) return null;
-        List<Register> registerList = new ArrayList<>();
+    public List<BindableService> registerList() throws IOException {
         if (context == null) {
             LOGGER.error("context is error");
             throw new RuntimeException("spring init error ");
         }
-        classes.forEach((registerClass -> {
-            registerList.add(context.getBean(registerClass));
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("load spring bean : [ {} ]", registerClass.getName());
-            }
-        }));
-        LOGGER.info("load spring bean count is {}", registerList.size());
-        return registerList;
+        String splashPath = StringUtil.dotToSplash(basePackage);
+        ClassLoader cl = ClassLoader.getSystemClassLoader();
+        String filePath = cl.getResource(splashPath).getFile();
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Scanner directory {}", filePath);
+        }
+        List<Class<BindableService>> load = load(basePackage, new File(filePath), BindableService.class);
+        if (load == null && 0 > load.size())
+            return null;
+        List<BindableService> bindableServices = new ArrayList<>();
+        load.forEach((bindClass) -> {
+            BindableService bean = context.getBean(bindClass);
+            if (bean != null) bindableServices.add(bean);
+            else LOGGER.info(" class : {} not found", bindClass.getName());
+            if (LOGGER.isDebugEnabled())
+                LOGGER.debug("load spring bean : [ {} ]", bindClass.getName());
+        });
+        LOGGER.info("load spring bean count is {}", bindableServices.size());
+        return bindableServices;
     }
 }

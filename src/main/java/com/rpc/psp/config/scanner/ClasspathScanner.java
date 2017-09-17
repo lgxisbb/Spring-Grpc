@@ -38,6 +38,7 @@ public class ClasspathScanner implements Scanner<Register> {
      * @throws IOException
      */
     private List<Register> doScan(String basePackage) throws IOException {
+        // repleaceAll  '.' -> '/'
         String splashPath = StringUtil.dotToSplash(basePackage);
         URL url = cl.getResource(splashPath);
         String filePath = StringUtil.getRootPath(url);
@@ -84,5 +85,12 @@ public class ClasspathScanner implements Scanner<Register> {
         return name.endsWith(".class");
     }
 
+
+    public static void main(String[] args) {
+        String sourcePath = "com.rpc.psp.config";
+        sourcePath = sourcePath.replaceAll("\\.", "/");
+        URL resource = Thread.currentThread().getContextClassLoader().getResource(sourcePath);
+        File file = new File(resource.getFile());
+    }
 }
 
