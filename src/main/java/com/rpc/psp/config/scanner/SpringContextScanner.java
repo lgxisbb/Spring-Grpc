@@ -9,6 +9,7 @@ import org.springframework.context.ApplicationContextAware;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,10 +41,9 @@ public class SpringContextScanner implements Scanner<BindableService>, Applicati
             LOGGER.error("context is error");
             throw new RuntimeException("spring init error ");
         }
-
-        String splashPath = StringUtil.dotToSplash(basePackage);
-        ClassLoader cl = ClassLoader.getSystemClassLoader();
-        String filePath = cl.getResource(splashPath).getFile();
+        String splash = StringUtil.dotToSplash(this.basePackage);
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
+        String filePath = cl.getResource(splash).getPath();
         if (LOGGER.isDebugEnabled()) LOGGER.debug("Scanner directory {}", filePath);
         List<Class<BindableService>> load = load(basePackage, new File(filePath), BindableService.class);
         if (load == null && 0 > load.size())
