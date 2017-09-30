@@ -47,11 +47,5 @@ public class ClasspathScanner implements Scanner<BindableService> {
         });
         return bindableServices;
     }
-
-    public static void main(String[] args) {
-        ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
-        ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
-        System.out.println(contextClassLoader == systemClassLoader);
-    }
 }
 
