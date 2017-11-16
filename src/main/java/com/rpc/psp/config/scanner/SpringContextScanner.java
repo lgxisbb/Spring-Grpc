@@ -1,5 +1,6 @@
 package com.rpc.psp.config.scanner;
 
+import com.rpc.psp.config.exception.PSPException;
 import io.grpc.BindableService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,8 +9,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,25 +35,29 @@ public class SpringContextScanner implements Scanner<BindableService>, Applicati
     }
 
     @Override
-    public List<BindableService> registerList() throws IOException {
+    public List<BindableService> registerList() throws Exception {
         if (context == null) {
             LOGGER.error("context is error");
-            throw new RuntimeException("spring init error ");
+            throw new PSPException("spring container initialization error ");
         }
         String splash = StringUtil.dotToSplash(this.basePackage);
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
         String filePath = cl.getResource(splash).getPath();
         if (LOGGER.isDebugEnabled()) LOGGER.debug("Scanner directory {}", filePath);
         List<Class<BindableService>> load = load(basePackage, new File(filePath), BindableService.class);
-        if (load == null && 0 > load.size())
+        if (load == null || 0 == load.size())
             return null;
         List<BindableService> bindableServices = new ArrayList<>();
         load.forEach((bindClass) -> {
             BindableService bean = context.getBean(bindClass);
-            if (bean != null) bindableServices.add(bean);
-            else LOGGER.info(" class : {} not found", bindClass.getName());
-            if (LOGGER.isDebugEnabled())
+            if (bean != null) {
+                bindableServices.add(bean);
+            } else {
+                LOGGER.info("class : {} not found", bindClass.getName());
+            }
+            if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("load spring bean : [ {} ]", bindClass.getName());
+            }
         });
         LOGGER.info("load spring bean count is {}", bindableServices.size());
         return bindableServices;

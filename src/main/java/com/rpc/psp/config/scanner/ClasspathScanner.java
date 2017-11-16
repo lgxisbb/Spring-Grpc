@@ -33,7 +33,7 @@ public class ClasspathScanner implements Scanner<BindableService> {
             LOGGER.debug("Scanner directory {}", filePath);
         }
         List<Class<BindableService>> load = load(basePackage, new File(filePath), BindableService.class);
-        if (load == null && 0 > load.size())
+        if (load == null || 0 == load.size())
             return null;
         List<BindableService> bindableServices = new ArrayList<>();
         load.forEach((bindClass) -> {

@@ -4,6 +4,4 @@ public interface PSPServer {
     void start();
 
     void stop();
-
-    void blockUntilShutdown();
 }
